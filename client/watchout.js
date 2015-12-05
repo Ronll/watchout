@@ -6,6 +6,9 @@ document.addEventListener("DOMContentLoaded", function() {
     var asteroidRadius = 10;
     var asteroidColor = 'gray';
     var counter = 0;
+    var score = 0;
+    var highScore = 0;
+
 
     var calculateDistance = function(x1,y1,x2,y2){
         return Math.sqrt(Math.pow((x2-x1),2) + Math.pow((y2-y1),2));
@@ -24,10 +27,25 @@ document.addEventListener("DOMContentLoaded", function() {
         id: 'player1'
     }];
 
+
+    var scoreBoardSelection = d3.select('body').select('.scoreboard');
+    var collisionText = scoreBoardSelection.select('.collisions span');
+
+    setInterval(function () {
+        score += 1
+        scoreBoardSelection.select('.current span').text(score);
+        if(score > highScore){
+            highScore = score;
+            scoreBoardSelection.select('.highscore span').text(highScore);
+        }
+
+    }, 100);
+
     var svgSelection = d3.select('body').append("svg")
         .attr("width", boardWidth)
         .attr("height", boardHeight)
-        .style("border-style", "solid");
+        .style("border-style", "solid")
+        .style("background-color", "white");
 
     var player = svgSelection.selectAll('circle')
         .data(playerData, function (d) {
@@ -63,6 +81,9 @@ document.addEventListener("DOMContentLoaded", function() {
         .call(drag);
 
     function update() {
+        var allowCollision = true;
+
+
         asteroidData = [];
         for (var i=0; i<numberOfAsteroids; i++){
             asteroidData.push({
@@ -103,12 +124,24 @@ document.addEventListener("DOMContentLoaded", function() {
                 var asteroid = d3.select(this);
                 var startPos = { x: parseFloat(asteroid.attr('cx')), y: parseFloat(asteroid.attr('cy')) };
                 var endPos = { x: parseFloat(endData.cx), y: parseFloat(endData.cy) };
-
+                var alreadyCollide = false;
                 return function(t) {
                     var asteroidNextPos = { x: startPos.x + (endPos.x - startPos.x)*t, y: startPos.y + (endPos.y - startPos.y)*t };
                     var distance = calculateDistance(asteroidNextPos.x,asteroidNextPos.y,parseFloat(player.attr('cx')), parseFloat(player.attr('cy')))
                     if(distance < (parseFloat(asteroidRadius) + parseFloat(playerData[0].r))*0.9){
-                        conter++;
+                        if(allowCollision) {
+                            counter++;
+                            svgSelection
+                                .transition()
+                                .duration(200)
+                                .style("background-color", "red")
+                                .transition()
+                                .duration(200)
+                                .style("background-color", "white");
+                            collisionText.text(counter);
+                            allowCollision = false;
+                            score = 0;
+                        }
                     }
                 };
             })

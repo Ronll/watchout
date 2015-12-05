@@ -32,7 +32,7 @@ document.addEventListener("DOMContentLoaded", function() {
     var collisionText = scoreBoardSelection.select('.collisions span');
 
     setInterval(function () {
-        score += 1
+        score += 1;
         scoreBoardSelection.select('.current span').text(score);
         if(score > highScore){
             highScore = score;
@@ -52,7 +52,7 @@ document.addEventListener("DOMContentLoaded", function() {
             return d.id;
         });
 
-    var asteroids = svgSelection.selectAll('circle')
+    var asteroids = svgSelection.selectAll('image')
         .data(asteroidData, function(d){
             return d.key;
         });
@@ -83,7 +83,6 @@ document.addEventListener("DOMContentLoaded", function() {
     function update() {
         var allowCollision = true;
 
-
         asteroidData = [];
         for (var i=0; i<numberOfAsteroids; i++){
             asteroidData.push({
@@ -91,30 +90,34 @@ document.addEventListener("DOMContentLoaded", function() {
                 'cx':Math.floor(Math.random() * (boardWidth - (boardWidth * 0.10))),
                 'cy': Math.floor(Math.random() * (boardHeight- (boardHeight * 0.10))),
                 'r': asteroidRadius+"px",
-                'fill': asteroidColor})
+                'fill': 'Shuriken.png'})
         }
 
-        asteroids = svgSelection.selectAll('circle')
+        asteroids = svgSelection.selectAll('image')
             .data(asteroidData, function(d){
                 return d.key;
             });
 
         //One time run
         asteroids.enter() //ENTER
-            .append('circle')
+            .append('image')
             .attr({
-                'cx': function(d){
+                'x': function(d){
                     return d.cx;
                 },
-                'cy': function(d){
+                'y': function(d){
                     return d.cy;
                 },
-                'r': function(d){
-                    return d.r;
+                'height': function(d){
+                    return parseFloat(d.r) * 2;
                 },
-                'fill': function(d){
+                'width' : function (d) {
+                    return parseFloat(d.r) * 2;
+                },
+                'xlink:href': function(d){
                     return d.fill;
-                }
+                },
+                'class': 'asteroidClass'
             });
 
         asteroids
@@ -122,7 +125,7 @@ document.addEventListener("DOMContentLoaded", function() {
             .duration(2500)
             .tween('custom', function(endData){
                 var asteroid = d3.select(this);
-                var startPos = { x: parseFloat(asteroid.attr('cx')), y: parseFloat(asteroid.attr('cy')) };
+                var startPos = { x: parseFloat(asteroid.attr('x')), y: parseFloat(asteroid.attr('y')) };
                 var endPos = { x: parseFloat(endData.cx), y: parseFloat(endData.cy) };
                 var alreadyCollide = false;
                 return function(t) {
@@ -146,18 +149,22 @@ document.addEventListener("DOMContentLoaded", function() {
                 };
             })
             .attr({
-                'cx': function(d){
+                'x': function(d){
                     return d.cx;
                 },
-                'cy': function(d){
+                'y': function(d){
                     return d.cy;
                 },
-                'r': function(d){
-                    return d.r;
+                'height': function(d){
+                    return parseFloat(d.r) * 2;
                 },
-                'fill': function(d){
+                'width': function(d){
+                    return parseFloat(d.r) * 2;
+                },
+                'xlink:href': function(d){
                     return d.fill;
-                }
+                },
+                'class': 'asteroidClass'
             });
 
         asteroids.on("tick", function(e) {

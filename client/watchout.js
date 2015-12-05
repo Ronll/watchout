@@ -5,11 +5,16 @@ document.addEventListener("DOMContentLoaded", function() {
     var boardHeight = window.innerHeight-(window.innerHeight*0.10);
     var asteroidRadius = 10;
     var asteroidColor = 'gray';
+    var counter = 0;
 
-    var svgSelection = d3.select('body').append("svg")
-        .attr("width", boardWidth)
-        .attr("height", boardHeight)
-        .style("border-style", "solid");
+    var calculateDistance = function(x1,y1,x2,y2){
+        return Math.sqrt(Math.pow((x2-x1),2) + Math.pow((y2-y1),2));
+    };
+
+    var axes = {
+        x: d3.scale.linear().domain([0,100]).range([0,boardWidth]),
+        y: d3.scale.linear().domain([0,100]).range([0,boardHeight])
+    };
 
     var playerData = [{
         cx : 500,
@@ -19,15 +24,24 @@ document.addEventListener("DOMContentLoaded", function() {
         id: 'player1'
     }];
 
+    var svgSelection = d3.select('body').append("svg")
+        .attr("width", boardWidth)
+        .attr("height", boardHeight)
+        .style("border-style", "solid");
+
     var player = svgSelection.selectAll('circle')
         .data(playerData, function (d) {
             return d.id;
         });
 
+    var asteroids = svgSelection.selectAll('circle')
+        .data(asteroidData, function(d){
+            return d.key;
+        });
+
     var drag = d3.behavior.drag()
         .on('drag', function() {
-            player.attr('cx', d3.event.x)
-                .attr('cy', d3.event.y);
+            player.attr('cx', d3.event.x).attr('cy', d3.event.y);
         });
 
     player.enter()
@@ -40,14 +54,13 @@ document.addEventListener("DOMContentLoaded", function() {
                 return d.cy;
             },
             'r': function(d){
-                return d.r;
+                return d.r+"px";
             },
             'fill': function(d){
                 return d.fill;
             }
         })
         .call(drag);
-
 
     function update() {
         asteroidData = [];
@@ -56,11 +69,11 @@ document.addEventListener("DOMContentLoaded", function() {
                 'key':i,
                 'cx':Math.floor(Math.random() * (boardWidth - (boardWidth * 0.10))),
                 'cy': Math.floor(Math.random() * (boardHeight- (boardHeight * 0.10))),
-                'r': asteroidRadius,
+                'r': asteroidRadius+"px",
                 'fill': asteroidColor})
         }
 
-        var asteroids = svgSelection.selectAll('circle')
+        asteroids = svgSelection.selectAll('circle')
             .data(asteroidData, function(d){
                 return d.key;
             });
@@ -83,7 +96,22 @@ document.addEventListener("DOMContentLoaded", function() {
                 }
             });
 
-        asteroids.transition().duration(2500)
+        asteroids
+            .transition()
+            .duration(2500)
+            .tween('custom', function(endData){
+                var asteroid = d3.select(this);
+                var startPos = { x: parseFloat(asteroid.attr('cx')), y: parseFloat(asteroid.attr('cy')) };
+                var endPos = { x: parseFloat(endData.cx), y: parseFloat(endData.cy) };
+
+                return function(t) {
+                    var asteroidNextPos = { x: startPos.x + (endPos.x - startPos.x)*t, y: startPos.y + (endPos.y - startPos.y)*t };
+                    var distance = calculateDistance(asteroidNextPos.x,asteroidNextPos.y,parseFloat(player.attr('cx')), parseFloat(player.attr('cy')))
+                    if(distance < (parseFloat(asteroidRadius) + parseFloat(playerData[0].r))*0.9){
+                        conter++;
+                    }
+                };
+            })
             .attr({
                 'cx': function(d){
                     return d.cx;
@@ -98,11 +126,16 @@ document.addEventListener("DOMContentLoaded", function() {
                     return d.fill;
                 }
             });
+
+        asteroids.on("tick", function(e) {
+            console.log(e);
+        });
+
     }
 
     update();
 
     setInterval(function(){
         update();
-    }, 1500);
+    }, 2500);
 });
